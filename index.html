@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MyCareerBuddy — Interview Question Generator</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <!-- pdf.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+  <!-- Tesseract (OCR) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+</head>
+<body class="light">
+  <header class="site-header">
+    <div class="brand">
+      <img src="/public/favicon.png" alt="logo" class="logo" onerror="this.style.display='none'"/>
+      <h1>MyCareerBuddy</h1>
+      <span class="tag">AI-powered interview question generator</span>
+    </div>
+    <div class="header-actions">
+      <button id="themeToggle">Dark</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <aside class="left-col">
+      <section class="card">
+        <h2>Upload / Paste Inputs</h2>
+
+        <label class="file-row">Job Description (text / PDF / image)
+          <input id="jdFile" type="file" accept=".pdf,image/*,text/*" />
+        </label>
+        <textarea id="jdText" placeholder="Or paste Job Description text here..."></textarea>
+
+        <label class="file-row">Resume (text / PDF / image)
+          <input id="resumeFile" type="file" accept=".pdf,image/*,text/*" />
+        </label>
+        <textarea id="resumeText" placeholder="Or paste Resume text here..."></textarea>
+
+        <div class="small">Tip: For best results paste text. PDF/image extraction may be slower.</div>
+      </section>
+
+      <section class="card">
+        <h2>Options</h2>
+        <div class="options-grid">
+          <div>
+            <label><input type="checkbox" class="cat" value="technical" checked /> Technical</label>
+          </div>
+          <div>
+            <label><input type="checkbox" class="cat" value="hr" checked /> HR</label>
+          </div>
+          <div>
+            <label><input type="checkbox" class="cat" value="resume" checked /> Resume-based</label>
+          </div>
+          <div>
+            <label><input type="checkbox" class="cat" value="system" checked /> System Design</label>
+          </div>
+          <div>
+            <label><input type="checkbox" class="cat" value="behavioral" checked /> Behavioral</label>
+          </div>
+          <div>
+            <label><input type="checkbox" class="cat" value="coding" checked /> Coding</label>
+          </div>
+        </div>
+
+        <label class="range-row">Max questions per category: <span id="numLabel">10</span>
+          <input id="numQ" type="range" min="1" max="25" value="10" />
+        </label>
+
+        <label>Model (for future): 
+          <select id="modelSelect">
+            <option value="gpt-4o-mini">gpt-4o-mini</option>
+            <option value="gpt-4o">gpt-4o</option>
+          </select>
+        </label>
+
+        <div style="margin-top:12px;">
+          <button id="generateBtn" class="primary">Generate Questions</button>
+          <button id="clearBtn" class="ghost">Clear</button>
+        </div>
+      </section>
+
+      <section class="card ad-space">
+        <div class="ad-label">Ad Space</div>
+        <div class="ad-box">Your ad here</div>
+      </section>
+    </aside>
+
+    <section class="right-col">
+      <section class="card">
+        <h2>Generated Questions</h2>
+        <div id="output" class="output">No output yet. Paste JD/resume and click Generate.</div>
+      </section>
+
+      <section class="card">
+        <h3>About & Contact</h3>
+        <p>AI powered · Safe to use · Privacy respected.</p>
+        <p>Contact: <a href="mailto:CareerBuddy.AI@gmail.com">CareerBuddy.AI@gmail.com</a></p>
+      </section>
+
+      <section class="card ad-space">
+        <div class="ad-label">Ad Space</div>
+        <div class="ad-box">Ad slot</div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div>© <span id="year"></span> MyCareerBuddy — AI Interview Questions</div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
