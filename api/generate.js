@@ -1,6 +1,3 @@
-<!-- ========================= -->
-<!-- api/generate.js (Vercel Serverless Function) -->
-<!-- ========================= -->
 export default async function handler(req, res) {
 try {
 const { jd, resume } = req.body;

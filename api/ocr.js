@@ -1,6 +1,3 @@
-<!-- ========================= -->
-<!-- api/ocr.js (Image OCR function using OpenAI Vision) -->
-<!-- ========================= -->
 export const config = {
 runtime: "edge"
 };
