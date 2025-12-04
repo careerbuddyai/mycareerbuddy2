@@ -1,154 +1,66 @@
-// script.js - client-side logic
-const jdFile = document.getElementById("jdFile");
-const resumeFile = document.getElementById("resumeFile");
-const jdText = document.getElementById("jdText");
-const resumeText = document.getElementById("resumeText");
-const generateBtn = document.getElementById("generateBtn");
-const clearBtn = document.getElementById("clearBtn");
-const output = document.getElementById("output");
-const themeToggle = document.getElementById("themeToggle");
-const numQ = document.getElementById("numQ");
-const numLabel = document.getElementById("numLabel");
+<!-- ========================= -->
+if (!file) return;
 
-document.getElementById("year").innerText = new Date().getFullYear();
 
-numQ.oninput = () => numLabel.innerText = numQ.value;
+if (file.type === "application/pdf") {
+textarea.value = "Extracting text from PDF... please wait";
+const text = await extractPDF(file);
+textarea.value = text;
+} else if (file.type.startsWith("image")) {
+textarea.value = "Extracting text from image...";
+const formData = new FormData();
+formData.append("image", file);
 
-// Theme toggle
-themeToggle.onclick = () => {
-  const body = document.body;
-  if (body.classList.contains("light")) {
-    body.classList.remove("light");
-    body.classList.add("dark");
-    themeToggle.innerText = "Light";
-  } else {
-    body.classList.remove("dark");
-    body.classList.add("light");
-    themeToggle.innerText = "Dark";
-  }
-};
 
-// read file helper: handles pdf and images
-async function extractTextFromFile(file) {
-  if (!file) return "";
-  const name = file.name.toLowerCase();
-  if (name.endsWith(".pdf")) {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let text = "";
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items.map(i => i.str).join(" ");
-        text += pageText + "\n\n";
-      }
-      return text;
-    } catch (e) {
-      console.warn("PDF extraction failed", e);
-      return "";
-    }
-  }
-
-  if (file.type.startsWith("image/")) {
-    // Use Tesseract.js
-    try {
-      output.innerText = "Performing OCR on image (may take a few seconds)...";
-      const { data: { text } } = await Tesseract.recognize(await file.arrayBuffer(), 'eng', { logger: m => {
-        // optional progress
-      }});
-      return text;
-    } catch (e) {
-      console.warn("OCR failed", e);
-      return "";
-    }
-  }
-
-  // plain text files
-  try {
-    const text = await file.text();
-    return text;
-  } catch (e) {
-    return "";
-  }
+const res = await fetch("/api/ocr", { method: "POST", body: formData });
+const data = await res.json();
+textarea.value = data.text;
+} else {
+alert("Unsupported file format");
+}
 }
 
-async function prepareInputs() {
-  // if file present, extract text; else use textarea
-  let jd = jdText.value.trim();
-  let resume = resumeText.value.trim();
 
-  if (jdFile.files.length > 0) {
-    const f = jdFile.files[0];
-    const t = await extractTextFromFile(f);
-    if (t && t.length > 10) jd = t;
-  }
+document.getElementById("jdFile").onchange = () => handleFile(jdFile, jd);
+document.getElementById("resumeFile").onchange = () => handleFile(resumeFile, resume);
 
-  if (resumeFile.files.length > 0) {
-    const f = resumeFile.files[0];
-    const t = await extractTextFromFile(f);
-    if (t && t.length > 10) resume = t;
-  }
 
-  return { jd, resume };
-}
+// GENERATE QUESTIONS
 
-generateBtn.onclick = async () => {
-  output.innerText = "Preparing input...";
 
-  const { jd, resume } = await prepareInputs();
-  if (!jd || !resume) {
-    output.innerText = "Please provide both Job Description and Resume (paste or upload files).";
-    return;
-  }
+document.getElementById("generateBtn").onclick = async () => {
+output.innerText = "Generating... Please wait";
 
-  // categories selected
-  const cats = Array.from(document.querySelectorAll(".cat:checked")).map(n => n.value);
-  if (cats.length === 0) {
-    output.innerText = "Select at least one category.";
-    return;
-  }
 
-  const perCategory = parseInt(numQ.value || "10", 10);
-  const model = document.getElementById("modelSelect").value;
+const res = await fetch("/api/generate", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({ jd: jd.value, resume: resume.value })
+});
 
-  output.innerText = "Generating... Please wait.";
 
-  try {
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jd, resume, categories: cats, perCategory, model })
-    });
-
-    if (!res.ok) {
-      const txt = await res.text();
-      output.innerText = "Server error: " + txt;
-      return;
-    }
-
-    const data = await res.json();
-    if (data.error) {
-      output.innerText = "Error: " + data.error;
-      return;
-    }
-
-    // Pretty-print categories & questions
-    let out = "";
-    for (const cat of Object.keys(data)) {
-      out += `=== ${cat.toUpperCase()} (${data[cat].length} Qs) ===\n\n`;
-      data[cat].forEach((q, i) => {
-        out += `${i + 1}. ${q}\n\n`;
-      });
-      out += "\n";
-    }
-    output.innerText = out;
-
-  } catch (err) {
-    output.innerText = "Network or server error: " + err.message;
-  }
+const data = await res.text();
+output.innerText = data;
 };
 
-clearBtn.onclick = () => {
-  jdText.value = ""; resumeText.value = ""; jdFile.value = ""; resumeFile.value = ""; output.innerText = "Cleared.";
+
+// CLEAR
+
+
+document.getElementById("clearBtn").onclick = () => {
+jd.value = "";
+resume.value = "";
+output.innerText = "";
+};
+
+
+// DOWNLOAD PDF
+
+
+document.getElementById("downloadBtn").onclick = () => {
+const blob = new Blob([output.innerText], { type: "text/plain" });
+const link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = "questions.txt";
+link.click();
 };
