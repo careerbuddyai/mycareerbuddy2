@@ -1,47 +1,20 @@
-export const config = {
-  runtime: "edge",
-};
+import Tesseract from "tesseract.js";
 
-export default async function handler(req) {
+export default async function handler(req, res) {
   try {
-    const form = await req.formData();
-    const file = form.get("image");
+    const { imageBase64 } = JSON.parse(req.body || "{}");
 
-    const arrayBuffer = await file.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    if (!imageBase64) {
+      return res.status(400).json({ error: "No image received" });
+    }
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "user", content: "Extract text from this image." },
-          {
-            role: "user",
-            content: [
-              {
-                type: "input_image",
-                image_url: `data:image/png;base64,${base64}`,
-              },
-            ],
-          },
-        ],
-      }),
-    });
+    const result = await Tesseract.recognize(
+      Buffer.from(imageBase64, "base64"),
+      "eng"
+    );
 
-    const data = await response.json();
-    return new Response(JSON.stringify({ text: data.choices[0].message.content }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    res.status(200).json({ text: result.data.text });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    res.status(500).json({ error: err.message });
   }
 }
